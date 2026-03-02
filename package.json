@@ -1,0 +1,16 @@
+{
+  "name": "smart-route-planner-backend",
+  "version": "1.0.0",
+  "description": "Smart Route Planner Backend",
+  "license": "ISC",
+  "author": "Pariskrit",
+  "type": "commonjs",
+  "main": "index.js",
+  "type":"module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
