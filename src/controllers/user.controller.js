@@ -119,12 +119,12 @@ const userLogout = asyncHandler(async (req, res) => {
 });
 
 const userProfile = asyncHandler(async (req, res) => {
-  const userId = req.user?._id;
+  const userId = req.params.id;
 
   const user = await User.findById(userId).select("-password -refreshToken");
 
   if (!user) {
-    new ApiError(404, "User not found");
+    throw new ApiError(404, "User not found");
   }
 
   res
@@ -165,7 +165,7 @@ const refreshToken = asyncHandler(async (req, res) => {
       new ApiResponse(200, "Successfull refreshed access and refresh token"),
     );
 });
-//refreshToken
+
 //updateUserProfile
 //changePassword
 export { userRegister, userLogin, userLogout, userProfile, refreshToken };
