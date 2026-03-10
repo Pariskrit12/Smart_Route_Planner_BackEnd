@@ -11,7 +11,8 @@ const generateAcessAndRefreshToken = async (userid) => {
     const user = await User.findById(userid);
     const accessToken = await user.generateAccessToken();
     const refreshToken = await user.generateRefreshToken();
-
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
     return { accessToken, refreshToken };
   } catch (error) {
     throw new ApiError(
@@ -94,4 +95,22 @@ const userLogin = asyncHandler(async (req, res) => {
       ),
     );
 });
-export { userRegister, userLogin };
+const userLogout = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: { refreshToken: undefined },
+    },
+    { returnDocument: "after" },
+  );
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+  res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, "User Logged Out Successfully"));
+});
+export { userRegister, userLogin, userLogout };
