@@ -166,6 +166,89 @@ const refreshToken = asyncHandler(async (req, res) => {
     );
 });
 
-//updateUserProfile
-//changePassword
-export { userRegister, userLogin, userLogout, userProfile, refreshToken };
+const updateUserUsername = asyncHandler(async (req, res) => {
+  const { username } = req.body;
+  const userId = req.user?._id;
+
+  if (!username) {
+    throw new ApiError(400, "Username is required");
+  }
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: { username },
+    },
+    { returnDocument: "after", runValidators: true },
+  ).select("-password -refreshToken");
+
+  if (!updatedUser) {
+    throw new ApiError(500, "Something went wrong while updating username");
+  }
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { updatedUser },
+        "User's username updated successfully",
+      ),
+    );
+});
+
+const updateUserPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword, confirmNewPassword } = req.body;
+
+  const userId = req.user?._id;
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const isPasswordValid = await user.isPasswordCorrect(oldPassword);
+  if (!isPasswordValid) {
+    throw new ApiError(400, "Password is wrong");
+  }
+  if (!passwordRegex.test(newPassword)) {
+    throw new ApiError(
+      400,
+      "Password must be at least 8 characters long, include 1 uppercase letter, 1 number, and 1 special character",
+    );
+  }
+  if (newPassword !== confirmNewPassword) {
+    throw new ApiError(400, "Password did not matched");
+  }
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: true });
+
+  const updatedUser = await User.findById(userId).select(
+    "-password -refreshToken",
+  );
+
+  if (!updatedUser) {
+    throw new ApiError(
+      500,
+      "Something went wrong while updating user password",
+    );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { updatedUser },
+        "Successfull updated user's password",
+      ),
+    );
+});
+
+export {
+  userRegister,
+  userLogin,
+  userLogout,
+  userProfile,
+  refreshToken,
+  updateUserUsername,
+  updateUserPassword,
+};
